@@ -695,12 +695,16 @@ export function useBuildStreaming() {
               .sessions.get(sessionId);
 
             if (session && session.streamItems.length > 0) {
-              const savedStreamItems = session.streamItems.map((item) => ({
-                ...item,
-                ...(item.type === "text" || item.type === "thinking"
-                  ? { isStreaming: false }
-                  : {}),
-              }));
+              // Connect cards are transient interaction prompts, not transcript
+              // content — drop them from the persisted message.
+              const savedStreamItems = session.streamItems
+                .filter((item) => item.type !== "connect_app_request")
+                .map((item) => ({
+                  ...item,
+                  ...(item.type === "text" || item.type === "thinking"
+                    ? { isStreaming: false }
+                    : {}),
+                }));
               const textContent = session.streamItems
                 .filter((item) => item.type === "text")
                 .map((item) => item.content)
@@ -732,6 +736,20 @@ export function useBuildStreaming() {
 
           case "approval_requested": {
             void globalMutate(SWR_KEYS.buildSessionLiveApprovals(sessionId));
+            break;
+          }
+
+          case "connect_app_request": {
+            // The `connect_app` tool is parked server-side; render the card
+            // inline so resolving it can unblock the tool.
+            if (!parsed.requestId) break;
+            appendStreamItem(sessionId, {
+              type: "connect_app_request",
+              id: parsed.requestId,
+              requestId: parsed.requestId,
+              appSlug: parsed.appSlug,
+              reason: parsed.reason,
+            });
             break;
           }
 
