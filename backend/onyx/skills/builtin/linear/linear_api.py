@@ -139,6 +139,14 @@ def _build_parser() -> argparse.ArgumentParser:
     sp.add_argument("title")
     sp.add_argument("--description")
     sp.add_argument("--assignee", help="user id")
+    sp.add_argument("--project", help="project id")
+    sp.add_argument("--state", help="workflow state id")
+    sp.add_argument("--priority", type=int, choices=range(5), help="0-4 (0=none)")
+    sp.add_argument(
+        "--label", action="append", help="label id (repeatable)"
+    )
+    sp.add_argument("--estimate", type=int, help="point estimate")
+    sp.add_argument("--parent", help="parent issue id")
 
     sp = sub.add_parser("comment", help="comment on an issue (write)")
     sp.add_argument("issue_id")
@@ -196,7 +204,8 @@ def _dispatch(a: argparse.Namespace) -> dict[str, Any]:
     if a.cmd == "projects":
         q = (
             "query($first:Int,$after:String){ projects(first:$first,after:$after)"
-            "{ nodes { id name state url } pageInfo { hasNextPage endCursor } } }"
+            "{ nodes { id name state url teams { nodes { id key name } } }"
+            " pageInfo { hasNextPage endCursor } } }"
         )
         return _paginate(q, {}, "projects", a.limit)
 
@@ -206,6 +215,18 @@ def _dispatch(a: argparse.Namespace) -> dict[str, Any]:
             inp["description"] = a.description
         if a.assignee:
             inp["assigneeId"] = a.assignee
+        if a.project:
+            inp["projectId"] = a.project
+        if a.state:
+            inp["stateId"] = a.state
+        if a.priority is not None:
+            inp["priority"] = a.priority
+        if a.label:
+            inp["labelIds"] = a.label
+        if a.estimate is not None:
+            inp["estimate"] = a.estimate
+        if a.parent:
+            inp["parentId"] = a.parent
         q = (
             "mutation($input:IssueCreateInput!){ issueCreate(input:$input)"
             "{ success issue { id identifier url } } }"

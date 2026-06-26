@@ -53,11 +53,21 @@ python linear_api.py search "login bug" [--limit N]
 python linear_api.py projects [--limit N]
 ```
 
+Each project includes its linked `teams { nodes { id key name } }`, so you can
+pick the right `team_id` for `create-issue --project`.
+
 ### Create an issue (write)
 
 ```
-python linear_api.py create-issue <team_id> "Title" [--description D] [--assignee USER_ID]
+python linear_api.py create-issue <team_id> "Title" \
+  [--description D] [--assignee USER_ID] \
+  [--project PROJECT_ID] [--state STATE_ID] [--priority 0-4] \
+  [--label LABEL_ID ...] [--estimate N] [--parent ISSUE_ID]
 ```
+
+`--label` is repeatable (pass it once per label id). `--priority` is 0-4
+(0 = no priority). `--state` takes a workflow state id; `--project`/`--parent`
+take ids. Use `projects` / `teams` to discover the ids.
 
 ### Comment on an issue (write)
 
