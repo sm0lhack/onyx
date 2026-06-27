@@ -142,9 +142,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--project", help="project id")
     sp.add_argument("--state", help="workflow state id")
     sp.add_argument("--priority", type=int, choices=range(5), help="0-4 (0=none)")
-    sp.add_argument(
-        "--label", action="append", help="label id (repeatable)"
-    )
+    sp.add_argument("--label", action="append", help="label id (repeatable)")
     sp.add_argument("--estimate", type=int, help="point estimate")
     sp.add_argument("--parent", help="parent issue id")
 
@@ -204,7 +202,8 @@ def _dispatch(a: argparse.Namespace) -> dict[str, Any]:
     if a.cmd == "projects":
         q = (
             "query($first:Int,$after:String){ projects(first:$first,after:$after)"
-            "{ nodes { id name state url teams { nodes { id key name } } }"
+            "{ nodes { id name state url"
+            " teams(first:50) { nodes { id key name } pageInfo { hasNextPage } } }"
             " pageInfo { hasNextPage endCursor } } }"
         )
         return _paginate(q, {}, "projects", a.limit)

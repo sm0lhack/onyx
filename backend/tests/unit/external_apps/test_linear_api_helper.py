@@ -11,9 +11,7 @@ from types import ModuleType
 from typing import Any
 
 _HELPER = (
-    Path(__file__).resolve().parents[3]
-    / "onyx/skills/builtin"
-    / "linear/linear_api.py"
+    Path(__file__).resolve().parents[3] / "onyx/skills/builtin" / "linear/linear_api.py"
 )
 
 
@@ -134,7 +132,9 @@ def test_projects_query_includes_team_linkage(monkeypatch: Any) -> None:
                             "name": "Roadmap",
                             "state": "started",
                             "url": "https://linear.app/p/P1",
-                            "teams": {"nodes": [{"id": "T1", "key": "ENG", "name": "Eng"}]},
+                            "teams": {
+                                "nodes": [{"id": "T1", "key": "ENG", "name": "Eng"}]
+                            },
                         }
                     ],
                     "pageInfo": {"hasNextPage": False, "endCursor": None},
@@ -147,7 +147,8 @@ def test_projects_query_includes_team_linkage(monkeypatch: Any) -> None:
     result = linear._dispatch(args)
 
     query = captured[0][0]
-    assert "teams { nodes { id key name } }" in query
+    # nested teams are bounded and carry a truncation hint (not silently capped)
+    assert "teams(first:50) { nodes { id key name } pageInfo { hasNextPage } }" in query
     # still backward compatible
     assert "id name state url" in query
     assert result["ok"] is True
